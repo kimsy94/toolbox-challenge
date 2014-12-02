@@ -2,6 +2,12 @@
 "use strict";
 
 var tiles = [];
+var timer;
+var right = 0;
+var wrong = 0;
+var left = 8;
+var imgClicked;
+var tileClicked;
 var idx;
 for (idx = 1; idx <= 32; ++idx) {
     tiles.push({
@@ -10,26 +16,24 @@ for (idx = 1; idx <= 32; ++idx) {
         flipped: false,
         matched: false
     });
-} //for each tile
+}
 
-console.log(tiles);
-
-//when document is ready...
 $(document).ready(function() {
-    //catch click event of start game button
     $('#start-game').click(function() {
-        console.log('start game button clicked!');
         tiles = _.shuffle(tiles);
-        var selectedTiles= tiles.slice(0, 8);
+        var selectedTiles = tiles.slice(0,8);
         var tilePairs = [];
-        _.forEach(selectedTiles, function(tile) {
+        _.forEach(selectedTiles, function (tile) {
             tilePairs.push(tile);
             tilePairs.push(_.clone(tile));
         });
         tilePairs = _.shuffle(tilePairs);
-        console.log(tilePairs);
+        imgClicked = [];
+        tileClicked = [];
+        window.clearInterval(timer);
 
         var gameBoard = $('#game-board');
+        gameBoard.empty();
         var row = $(document.createElement('div'));
         var img;
         _.forEach(tilePairs, function(tile, elemIndex) {
@@ -49,30 +53,36 @@ $(document).ready(function() {
         });
         gameBoard.append(row);
 
-        //get starting milliseconds
         var startTime = Date.now();
-        window.setInterval(function() {
+        timer = window.setInterval(function () {
             var elapsedSeconds = (Date.now() - startTime) / 1000;
             elapsedSeconds = Math.floor(elapsedSeconds);
             $('#elapsed-seconds').text(elapsedSeconds + ' seconds');
         }, 1000);
 
-        $('#game-board img').click(function() {
-            //console.log(this.alt);
+        status();
+
+        $('#game-board img').click(function () {
             var clickedImg = $(this);
             var tile = clickedImg.data('tile');
-            console.log(tile);
             flipTile(tile, clickedImg);
+            flippedTile(tile, clickedImg);
         });
+    });
+});
 
-    }); //start game button click
-
-}); //document ready function
+function status () {
+    $('#right').text(right);
+    $('#wrong').text(wrong);
+    $('#left').text(left);
+}
 
 function flipTile(tile, img) {
-    img.fadeOut(100, function() {
+    img.fadeOut(100, function () {
         if (tile.flipped) {
-            img.attr('src', 'img/tile-back.png');
+            if (!tile.matched) {
+                img.attr('src', 'img/tile-back.png');
+            }
         }
         else {
             img.attr('src', tile.src);
@@ -80,4 +90,45 @@ function flipTile(tile, img) {
         tile.flipped = !tile.flipped;
         img.fadeIn(100);
     });
+}
+
+function flippedTile(tile, img) {
+    if (imgClicked.length == 0) {
+        imgClicked.push(img);
+        tileClicked.push(tile);
+    }
+    else if (imgClicked.length == 1) {
+        imgClicked.push(img);
+        tileClicked.push(tile);
+        if (tileClicked[0] === tileClicked[1]) {
+            tileClicked.pop();
+            imgClicked.pop();
+            return;
+        }
+        if (tileClicked[0].tileNum == tileClicked[1].tileNum) {
+            right++;
+            left--;
+            tileClicked[0].matched = true;
+            tileClicked[1].matched = true;
+            imgClicked = [];
+            tileClicked = [];
+            if (left == 0) {
+                window.setTimeout(function () {
+                    window.clearInterval(timer);
+                    alert("You won!");
+                }, 250);
+            }
+        }
+        else {
+            var idx;
+            wrong++;
+            window.setTimeout(function () {
+                flipTile(tileClicked[0], imgClicked[0]);
+                flipTile(tileClicked[1], imgClicked[1]);
+                imgClicked = [];
+                tileClicked = [];
+            }, 1000);
+        }
+        status();
+    }
 }
