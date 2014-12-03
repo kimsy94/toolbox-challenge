@@ -65,7 +65,12 @@ $(document).ready(function() {
         $('#game-board img').click(function () {
             var clickedImg = $(this);
             var tile = clickedImg.data('tile');
+            if (tile.flipped)
+            {
+                return;
+            }
             flipTile(tile, clickedImg);
+
             flippedTile(tile, clickedImg);
         });
     });
@@ -97,19 +102,10 @@ function flippedTile(tile, img) {
         imgClicked.push(img);
         tileClicked.push(tile);
     }
-    else if (imgClicked.length == 1) {
-        imgClicked.push(img);
-        tileClicked.push(tile);
-        if (tileClicked[0] === tileClicked[1]) {
-            tileClicked.pop();
-            imgClicked.pop();
-            return;
-        }
-        if (tileClicked[0].tileNum == tileClicked[1].tileNum) {
+    else {
+        if (tileClicked[0].tileNum == tile.tileNum) {
             right++;
             left--;
-            tileClicked[0].matched = true;
-            tileClicked[1].matched = true;
             imgClicked = [];
             tileClicked = [];
             if (left == 0) {
@@ -124,11 +120,13 @@ function flippedTile(tile, img) {
             wrong++;
             window.setTimeout(function () {
                 flipTile(tileClicked[0], imgClicked[0]);
-                flipTile(tileClicked[1], imgClicked[1]);
+                flipTile(tile, img);
                 imgClicked = [];
                 tileClicked = [];
             }, 1000);
         }
         status();
     }
+
+
 }
