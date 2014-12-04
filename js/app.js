@@ -127,6 +127,4 @@ function flippedTile(tile, img) {
         }
         status();
     }
-
-
 }
